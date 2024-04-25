@@ -1,0 +1,9 @@
+{
+  "name": "Cool Exam",
+  "questions": [
+    {
+      "prompt": "What day is it?",
+      "choices": ["4/24/2024", "4/25/2024", "12/25/2024", "asfdfa"]
+    }
+  ]
+}
