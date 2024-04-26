@@ -23,7 +23,7 @@ impl eframe::App for ExamApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             if ui.button("Load Exam File").clicked() {
-                if let Some(exam_path) = rfd::FileDialog::new().pick_file() {
+                if let Some(exam_path) = rfd::FileDialog::new().add_filter("exam blaze test", &["json", "blaze"]).pick_file() {
                     self.load_exam(exam_path);
                 }
             }
