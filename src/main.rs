@@ -7,6 +7,7 @@ struct ExamApp {
     current_exam: Option<Exam>,
     current_question: usize,
     choice_selections: Vec<(usize, Choice)>,
+    error_message: Option<String>,
 }
 
 impl Default for ExamApp {
@@ -14,7 +15,8 @@ impl Default for ExamApp {
         Self {
             current_exam: None,
             current_question: 0,
-            choice_selections: Vec::new()
+            choice_selections: Vec::new(),
+            error_message: None,
         }
     }
 }
@@ -22,9 +24,14 @@ impl Default for ExamApp {
 impl eframe::App for ExamApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
+            if let Some(ref error_message) = self.error_message {
+                ui.label(error_message);
+            }
             if ui.button("Load Exam File").clicked() {
-                if let Some(exam_path) = rfd::FileDialog::new().add_filter("exam blaze test", &["json", "blaze"]).pick_file() {
+                if let Some(exam_path) = rfd::FileDialog::new().add_filter("BlazeExam", &["json", "examblaze", "blaze"]).pick_file() {
                     self.load_exam(exam_path);
+                } else {
+                    self.error_message = Some(String::from("Error opening exam file!"));
                 }
             }
 
