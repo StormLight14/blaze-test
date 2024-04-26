@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use eframe::egui;
+use std::path::PathBuf;
 use std::fs;
 
 struct ExamApp {
@@ -21,13 +22,15 @@ impl Default for ExamApp {
 impl eframe::App for ExamApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Exam Blaze");
-            if ui.button("Load Exam").clicked() {
-                self.load_exam();
+            if ui.button("Load Exam File").clicked() {
+                if let Some(exam_path) = rfd::FileDialog::new().pick_file() {
+                    self.load_exam(exam_path);
+                }
             }
 
             
             if let Some(ref mut exam_data) = self.current_exam {
+                ui.heading(&exam_data.name);
                 if self.choice_selections.len() == 0 {
                     for i in 0..exam_data.question_count() {
                         self.choice_selections.push((i, Choice::A));
@@ -55,8 +58,8 @@ impl eframe::App for ExamApp {
 }
 
 impl ExamApp {
-    fn load_exam(&mut self) {
-        let exam_data = fs::read_to_string("exam.json").unwrap();
+    fn load_exam(&mut self, exam_path: PathBuf) {
+        let exam_data = fs::read_to_string(exam_path).unwrap();
         match serde_json::from_str::<Exam>(&exam_data) {
             Ok(exam) => {
                 self.current_exam = Some(exam);
