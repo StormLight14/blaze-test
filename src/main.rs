@@ -3,13 +3,17 @@ use eframe::egui;
 use std::fs;
 
 struct ExamApp {
-    current_exam: Option<Exam>
+    current_exam: Option<Exam>,
+    current_question: usize,
+    choice_selections: Vec<(usize, Choice)>,
 }
 
 impl Default for ExamApp {
     fn default() -> Self {
         Self {
-            current_exam: None
+            current_exam: None,
+            current_question: 0,
+            choice_selections: Vec::new()
         }
     }
 }
@@ -21,9 +25,28 @@ impl eframe::App for ExamApp {
             if ui.button("Load Exam").clicked() {
                 self.load_exam();
             }
+
             
             if let Some(ref mut exam_data) = self.current_exam {
-                ui.label(format!("{:?}", exam_data));
+                if self.choice_selections.len() == 0 {
+                    for i in 0..exam_data.question_count() {
+                        self.choice_selections.push((i, Choice::A));
+                    }
+                }
+                ui.label(format!("Question {}: {}", self.current_question + 1, exam_data.questions[self.current_question].prompt));
+                for (i, choice_label) in exam_data.questions[self.current_question].choices.iter().enumerate() {
+                    ui.radio_value(&mut self.choice_selections[self.current_question].1, Choice::from(i), &*choice_label);
+                }
+                if self.current_question > 0 {
+                    if ui.button("Previous Question").clicked() {
+                        self.current_question = self.current_question - 1;
+                    }
+                } 
+                if self.current_question != 0 && self.current_question < exam_data.question_count() - 2 {
+                    if ui.button("Next Question").clicked() {
+                        self.current_question = self.current_question + 1;
+                    }
+                }
             }
         });
     }
@@ -34,7 +57,6 @@ impl ExamApp {
         let exam_data = fs::read_to_string("exam.json").unwrap();
         match serde_json::from_str::<Exam>(&exam_data) {
             Ok(exam) => {
-                println!("{:?}", exam);
                 self.current_exam = Some(exam);
             },
             Err(err) => eprintln!("{:?}", err),
@@ -49,18 +71,54 @@ struct Exam {
 }
 
 impl Exam {
-    fn question_count(&self) -> u32 {
-        self.questions.len() as u32
+    fn question_count(&self) -> usize {
+        self.questions.len()
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct Question {
     prompt: String,
     choices: Vec<String>,
 }
 
+#[derive(Debug, PartialEq, Deserialize, Clone)]
+enum Choice {
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+}
+
+impl Default for Choice {
+    fn default() -> Self {
+        Choice::A
+    }
+}
+
+impl From<usize> for Choice {
+    fn from(value: usize) -> Self {
+        match value {
+            0 => Choice::A,
+            1 => Choice::B,
+            2 => Choice::C,
+            3 => Choice::D,
+            4 => Choice::E,
+            5 => Choice::F,
+            6 => Choice::G,
+            7 => Choice::H,
+            _ => Choice::A,
+        }
+    }
+}
+
 fn main() -> Result<(), eframe::Error> {
+    env_logger::init();
+
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default().with_inner_size([320.0, 240.0]),
         ..Default::default()
