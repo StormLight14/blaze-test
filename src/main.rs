@@ -37,16 +37,18 @@ impl eframe::App for ExamApp {
                 for (i, choice_label) in exam_data.questions[self.current_question].choices.iter().enumerate() {
                     ui.radio_value(&mut self.choice_selections[self.current_question].1, Choice::from(i), &*choice_label);
                 }
-                if self.current_question > 0 {
-                    if ui.button("Previous Question").clicked() {
-                        self.current_question = self.current_question - 1;
+                ui.horizontal(|ui| {
+                    if self.current_question > 0 {
+                        if ui.button("Previous Question").clicked() {
+                            self.current_question -= 1;
+                        }
+                    } 
+                    if (self.current_question as i32) < (exam_data.question_count() as i32) - 1 {
+                        if ui.button("Next Question").clicked() {
+                            self.current_question += 1;
+                        }
                     }
-                } 
-                if self.current_question != 0 && self.current_question < exam_data.question_count() - 2 {
-                    if ui.button("Next Question").clicked() {
-                        self.current_question = self.current_question + 1;
-                    }
-                }
+                });
             }
         });
     }
