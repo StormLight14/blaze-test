@@ -8,6 +8,7 @@ struct ExamApp {
     current_question: usize,
     choice_selections: Vec<(usize, Choice)>,
     error_message: Option<String>,
+    correct_answers: Option<u32>
 }
 
 impl Default for ExamApp {
@@ -17,6 +18,7 @@ impl Default for ExamApp {
             current_question: 0,
             choice_selections: Vec::new(),
             error_message: None,
+            correct_answers: None
         }
     }
 }
@@ -27,38 +29,49 @@ impl eframe::App for ExamApp {
             if let Some(ref error_message) = self.error_message {
                 ui.label(error_message);
             }
-            if ui.button("Load Exam File").clicked() {
-                if let Some(exam_path) = rfd::FileDialog::new().add_filter("BlazeExam", &["json", "examblaze", "blaze"]).pick_file() {
-                    self.load_exam(exam_path);
-                } else {
-                    self.error_message = Some(String::from("Error opening exam file!"));
+            if let (Some(correct_answers), Some(ref current_exam)) = (self.correct_answers, &self.current_exam) {
+                ui.label("Exam Submitted!");
+                ui.label(format!("You got {} out of {} questions correct.", correct_answers, current_exam.question_count()));
+            } else {
+                if ui.button("Load Exam File").clicked() {
+                    if let Some(exam_path) = rfd::FileDialog::new().add_filter("BlazeExam", &["json", "examblaze", "blaze"]).pick_file() {
+                        self.load_exam(exam_path);
+                    } else {
+                        self.error_message = Some(String::from("Error opening exam file!"));
+                    }
                 }
-            }
 
-            
-            if let Some(ref mut exam_data) = self.current_exam {
-                ui.heading(&exam_data.name);
-                if self.choice_selections.len() == 0 {
-                    for i in 0..exam_data.question_count() {
-                        self.choice_selections.push((i, Choice::A));
-                    }
-                }
-                ui.label(format!("Question {}: {}", self.current_question + 1, exam_data.questions[self.current_question].prompt));
-                for (i, choice_label) in exam_data.questions[self.current_question].choices.iter().enumerate() {
-                    ui.radio_value(&mut self.choice_selections[self.current_question].1, Choice::from(i), &*choice_label);
-                }
-                ui.horizontal(|ui| {
-                    if self.current_question > 0 {
-                        if ui.button("Previous Question").clicked() {
-                            self.current_question -= 1;
-                        }
-                    } 
-                    if (self.current_question as i32) < (exam_data.question_count() as i32) - 1 {
-                        if ui.button("Next Question").clicked() {
-                            self.current_question += 1;
+                
+                if let Some(ref mut exam_data) = self.current_exam {
+                    ui.heading(&exam_data.name);
+                    if self.choice_selections.len() == 0 {
+                        for i in 0..exam_data.question_count() {
+                            self.choice_selections.push((i, Choice::A));
                         }
                     }
-                });
+                    ui.label(format!("Question {}: {}", self.current_question + 1, exam_data.questions[self.current_question].prompt));
+                    for (i, choice_label) in exam_data.questions[self.current_question].choices.iter().enumerate() {
+                        ui.radio_value(&mut self.choice_selections[self.current_question].1, Choice::from(i), &*choice_label);
+                    }
+                    ui.horizontal(|ui| {
+                        if self.current_question > 0 {
+                            if ui.button("Previous Question").clicked() {
+                                self.current_question -= 1;
+                            }
+                        } 
+                        if (self.current_question as i32) < (exam_data.question_count() as i32) - 1 {
+                            if ui.button("Next Question").clicked() {
+                                self.current_question += 1;
+                            }
+                        }
+                    });
+
+                    if (self.current_question as i32) == (exam_data.question_count() as i32) - 1 {
+                        if ui.button("Submit Exam").clicked() {
+                            self.submit_exam();
+                        }
+                    }
+                }
             }
         });
     }
@@ -73,6 +86,19 @@ impl ExamApp {
             },
             Err(err) => eprintln!("{:?}", err),
         };
+    }
+    fn submit_exam(&mut self) {
+        let mut correct_answers = 0;
+        if let Some(ref exam) = self.current_exam {
+            for (i, question) in exam.questions.iter().enumerate() {
+                if self.choice_selections[i].1 == Choice::from(question.answer.as_str()) {
+                    correct_answers += 1;
+                }
+            }
+            self.correct_answers = Some(correct_answers);
+        } else {
+            self.correct_answers = None;
+        }
     }
 }
 
@@ -92,6 +118,7 @@ impl Exam {
 struct Question {
     prompt: String,
     choices: Vec<String>,
+    answer: String,
 }
 
 #[derive(Debug, PartialEq, Deserialize, Clone)]
@@ -109,6 +136,22 @@ enum Choice {
 impl Default for Choice {
     fn default() -> Self {
         Choice::A
+    }
+}
+
+impl From<&str> for Choice {
+    fn from(value: &str) -> Self {
+        match value {
+            "A" => Choice::A,
+            "B" => Choice::B,
+            "C" => Choice::C,
+            "D" => Choice::D,
+            "E" => Choice::E,
+            "F" => Choice::F,
+            "G" => Choice::G,
+            "H" => Choice::H,
+            _ => Choice::A,
+        }
     }
 }
 

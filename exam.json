@@ -3,15 +3,18 @@
   "questions": [
     {
       "prompt": "What day is it?",
-      "choices": ["4/24/2024", "4/25/2024", "12/25/2024", "asfdfa"]
+      "choices": ["4/24/2024", "4/25/2024", "12/25/2024", "asfdfa"],
+      "answer": "A"
     },
     {
       "prompt": "What is 2+2?",
-      "choices": ["1", "2.5", "6", "10"]
+      "choices": ["1", "2.5", "6", "10"],
+      "answer": "B"
     },
     {
       "prompt": "What is pi?",
-      "choices": ["-3.14", "10", "17", "100.42323"]
+      "choices": ["-3.14", "10", "17", "100.42323"],
+      "answer": "C"
     }
   ]
 }
