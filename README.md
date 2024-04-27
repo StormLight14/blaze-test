@@ -1,1 +1,1 @@
-# Exam Blaze
+# BlazeExam
